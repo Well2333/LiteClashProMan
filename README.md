@@ -11,7 +11,7 @@
 安装依赖（推荐使用pipx）
 
 ```bash
-pip install LiteClashProMan
+pip install liteclashproman
 ```
 
 运行程序
