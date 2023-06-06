@@ -60,8 +60,6 @@ logger.add(
     backtrace=True,
     diagnose=True,
     rotation="00:00",
-    retention="1 years",
-    compression="tar.xz",
     colorize=False,
     level="DEBUG",
 )
