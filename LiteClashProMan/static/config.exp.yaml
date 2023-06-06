@@ -1,0 +1,78 @@
+# ============================== 日志相关设置 ==============================
+## 终端输出的日志等级，取值范围如下，排名越靠后其等级越高、详细程度越低、内容越少
+## TRACE / DEBUG / INFO / WARNING / ERROR / CRITICAL       推荐取 INFO 即可
+log_level: INFO
+
+# ============================== 下载相关设置 ==============================
+## 下载的最大携程数，服务器网络质量越好可以设置的值越高
+download_thread: 3
+## 下载失败的重试次数，若服务器网络质量较差，建议设置较高数值
+download_retry: 3
+## 下载使用的代理地址
+# download_proxy: "http://127.0.0.1:7890"
+
+#  ============================== 更新相关设置 ==============================
+## 触发更新的cron表达式，仅支持五位表达式，其格式为: 分 时 日 月 周
+update_cron: 35 6 * * *
+## 更新所参考的时区，如果是国内用户请勿改动
+update_tz: Asia/Shanghai
+
+# ============================== API相关设置 ==============================
+## 填写到 *配置文件中* 的服务器域名/IP地址，如果填写错误可能造成规则集无法更新成功
+## 例如此处的默认值即为供本机使用的地址
+domian: http://127.0.0.1:46199
+## fastapi监听的地址，一般情况下不需要改动
+host: 0.0.0.0
+## fastapi监听的端口，请与domain保持一致
+port: 46199
+## 监听的路径前缀，例如在默认值时，监听地址为 http://0.0.0.0:46199/path/to/mess/url
+## 主要目的是为了混淆url地址，使其不易被误触，防止配置文件泄露
+urlprefix: /path/to/mess/url
+## 响应配置文件中包含的 headers，用于填充额外数据，以供CFW等支持的客户端进行解析
+## 注意: subscription-userinfo 将会根据配置信息，由脚本自动生成并添加，不要自定义！
+headers:
+  cache-Control: "no-store,no-cache,must-revalidate"
+  profile-update-interval: "24"
+
+# ============================== 订阅相关设置 ==============================
+subscribes:
+  # Just My Socks 订阅
+  JMS:
+    type: jms
+    url: https://jmssub.net/members/getsub.php?service=<service>&id=<id>
+    # JMS 的用量信息获取地址, 会添加至 subscription-userinfo
+    counter: https://justmysocks5.net/members/getbwcounter.php?service=<service>&id=<id>
+    # JMS 过期时间所参考的时区
+    subtz: America/Los_Angeles
+
+  # 通用的Clash订阅地址，通过联网下载获取
+  # 若订阅的 headers 中包含 subscription-userinfo 将会添加至返回的 headers 中
+  ClashSub:
+    type: ClashSub
+    url: https://your.clash.sub/address
+  # 通用的Clash配置文件，通过本地文件获取
+  # 此方法无法获取 subscription-userinfo
+  ClashFile:
+    type: ClashFile
+    file: /path/to/your/clash/profile.yaml
+  
+
+# ============================== 配置文件相关设置 ==============================
+profiles:
+  JMS-blacklist: # 配置文件名，注意不要重名，否则将会被覆盖
+    template: blacklist # 使用的配置模板
+    subs: # 使用的订阅节点，可留空
+      - JMS # 节点名为订阅信息中的节点名
+  whitelist-jms:
+    template: whitelist
+    subs: # 若包含多个节点，会禁用 subscription-userinfo
+      - ClashSub
+      - ClashFile
+  copy-template:
+    # 若subs留空，即直接复制模板文件并进行合法性检查，也会禁用 subscription-userinfo
+    template: profile
+
+# 备注：
+#
+# subscription-userinfo：获取订阅地址时包含在 headers 中的参数，部分基于 clash 的软件
+# 例如 Clash for Windows 可以通过此参数获取节点的剩余流量、过期时间等信息

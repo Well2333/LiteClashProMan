@@ -1,0 +1,25 @@
+
+[project]
+name = "LiteClashProMan"
+version = "0.1.0"
+description = "生成并更新 clash 配置文件，并提供 http 下载和规则文件镜像下载。"
+authors = [
+    {name = "Well404", email = "well_404@outlook.com"},
+]
+dependencies = [
+    "pyyaml>=6.0",
+    "fastapi[all]>=0.96.0",
+    "httpx>=0.24.1",
+    "APScheduler>=3.10.1",
+    "loguru>=0.7.0",
+]
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "APGL-3.0"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project.scripts]
+lcpm = "LiteClashProMan.__init__:main"
