@@ -21,7 +21,7 @@ def main():
 
     for dir in [data_dir, profile_dir, provider_dir, template_dir]:
         if not dir.exists():
-            dir.mkdir(0o510, parents=True, exist_ok=True)
+            dir.mkdir(0o755, parents=True, exist_ok=True)
         assert dir.is_dir(), f"{dir.as_posix()} should be folder"
 
     if not any(template_dir.glob("*")):
@@ -32,7 +32,7 @@ def main():
     # remove old profiles
     if any(profile_dir.glob("*")):
         shutil.rmtree(profile_dir)
-        profile_dir.mkdir(0o510, parents=True, exist_ok=True)
+        profile_dir.mkdir(0o755, parents=True, exist_ok=True)
 
     Config.load(Path(args.config))
 
