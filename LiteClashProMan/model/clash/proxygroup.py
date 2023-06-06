@@ -5,7 +5,7 @@ from pydantic import BaseModel, Extra
 
 class ProxyGroupTemplate(BaseModel, extra=Extra.allow):
     name: str
-    type: Literal["select", "url-test"]
+    type: str
     proxies: Union[List[str], Literal["__proxies_name_list__"]]
     url: Optional[str]
     interval: Optional[int]
