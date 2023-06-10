@@ -11,22 +11,31 @@ from .base64 import ss, vmess
 
 
 async def counter(url, tz: Optional[str] = None):
+    tz = timezone(tz) if tz else None
     info = json.loads(await Download.content(url))
     download_ = info["bw_counter_b"]
     total = info["monthly_bw_limit_b"]
-    timenow = datetime.now()
-    if timenow.month == 12:
-        month = 1
-        year = timenow.year + 1
+    expire_time = datetime.now(tz)
+
+    if expire_time.day >= info["bw_reset_day_of_month"]:
+        # If today's date passes reset_day_of_month
+        # the next month should be taken
+        if expire_time.month == 12:
+            year = expire_time.year + 1
+            month = expire_time.month = 1
+        else:
+            year = expire_time.year
+            month = expire_time.month + 1
     else:
-        month = timenow.month + 1
-        year = timenow.year
+        year = expire_time.year
+        month = expire_time.month
+
     expire = int(
         datetime(
             year=year,
             month=month,
             day=info["bw_reset_day_of_month"],
-            tzinfo=timezone(tz) if tz else None,
+            tzinfo=tz,
         ).timestamp()
     )
 
