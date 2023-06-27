@@ -2,6 +2,9 @@
 ## 终端输出的日志等级，取值范围如下，排名越靠后其等级越高、详细程度越低、内容越少
 ## TRACE / DEBUG / INFO / WARNING / ERROR / CRITICAL       推荐取 INFO 即可
 log_level: INFO
+## 使用 sentry.io 进行异常捕获，并提示账号所有者
+## 需要额外的依赖 sentry-sdk[fastapi]，或LiteClashProMan[extra]
+# sentry_dsn: https://xxxx.ingest.sentry.io/xxxxxx
 
 # ============================== 下载相关设置 ==============================
 ## 下载的最大携程数，服务器网络质量越好可以设置的值越高

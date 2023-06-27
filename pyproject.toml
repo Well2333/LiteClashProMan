@@ -1,7 +1,7 @@
 
 [project]
 name = "LiteClashProMan"
-version = "0.1.4"
+version = "0.2.0"
 description = "生成并更新 clash 配置文件，并提供 http 下载和规则文件镜像下载。"
 authors = [
     {name = "Well404", email = "well_404@outlook.com"},
@@ -16,6 +16,11 @@ dependencies = [
 requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "APGL-3.0"}
+
+[project.optional-dependencies]
+extra = [
+    "sentry-sdk[fastapi]>=1.26.0",
+]
 
 [build-system]
 requires = ["pdm-backend"]
