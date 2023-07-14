@@ -16,7 +16,7 @@ class Download:
 
     @classmethod
     def init(cls):
-        cls.client = AsyncClient(proxies=config.download_proxy)
+        cls.client = AsyncClient(proxies=config.download_proxy, follow_redirects=True)
         cls.sem = Semaphore(config.download_thread)
 
     @classmethod
