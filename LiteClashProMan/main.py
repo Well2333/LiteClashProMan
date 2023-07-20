@@ -1,10 +1,10 @@
-import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from starlette.responses import FileResponse
+from uvicorn import Config, Server
 
 from .config import config
 from .log import LOGGING_CONFIG
@@ -27,11 +27,23 @@ app.mount(f"/{config.urlprefix}/provider", StaticFiles(directory="data/provider"
 
 # profile download
 @app.get(f"/{config.urlprefix}/profile" + "/{path}")
-async def profile(path: str):
+async def profile(request: Request, path: str, id: str = None):
     path = path.rsplit(".", 1)[0] + ".yaml"
-    logger.info(f"A request to download profile {path} was received")
-    if path[:-5] not in config.profiles.keys():
+
+    # check profile is exists
+    if not (profile_ := config.profiles.get(path[:-5])):
         raise HTTPException(404, f"Profile {path} not found")
+
+    # check id if ids exists
+    if profile_.ids and id not in profile_.ids:
+        raise HTTPException(status_code=403, detail="Invalid ID")
+
+    # logging id and ip
+    user_ip = request.headers.get("X-Real-IP", request.client.host)
+    logger.info(
+        f"A request from {id}({user_ip}) to download profile {path} was received"
+    )
+
     resp = FileResponse(
         path=f"data/profile/{path}",
     )
@@ -50,10 +62,12 @@ async def _():
     error = await update()
     return str(error) or "update complete"
 
+
 # test sentry debug
 @app.get("/sentry-debug")
 async def trigger_error():
     division_by_zero = 1 / 0
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -74,4 +88,13 @@ async def startup_event():
 
 
 def main():
-    uvicorn.run(app, host=config.host, port=config.port, log_config=LOGGING_CONFIG)
+    Server(
+        Config(
+            app,
+            host=config.host,
+            port=config.port,
+            log_config=LOGGING_CONFIG,
+            reload=True,  # Enable "hot-reloading"
+            reload_includes=[config.config_file_path],  # Watch 'config.yaml'
+        )
+    ).run()
