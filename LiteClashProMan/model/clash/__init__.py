@@ -35,6 +35,10 @@ class ClashTemplate(BaseModel, extra=Extra.allow):
         for group in self.proxy_groups:
             if group.proxies == "__proxies_name_list__":
                 group.proxies = proxies_name_list
+            if isinstance(group.proxies, list):
+                if "__proxies_name_list__" in group.proxies:
+                    group.proxies.remove("__proxies_name_list__")
+                    group.proxies += proxies_name_list
             proxy_groups.append(group)
 
         self.proxies = proxies
