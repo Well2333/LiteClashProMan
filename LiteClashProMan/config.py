@@ -1,16 +1,15 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union,Set
 
 import yaml
 from pydantic import BaseModel, Extra, validator
 from pytz import UnknownTimeZoneError, timezone
-import contextvars
 
 
 class Subscribe(BaseModel, extra=Extra.allow):
     type: str
-    subtz: Optional[str] = "Asia/Shanghai"
+    subtz: str = "Asia/Shanghai"
 
     @validator("subtz")
     def check_timezone(cls, tz: str):
@@ -70,6 +69,8 @@ class Config(BaseModel, extra=Extra.ignore):
     subscribes: Dict[str, Union[JMS, ClashSub, ClashFile]]
     profiles: Dict[str, Profile]
 
+    _config_file_path: str = "config.yaml"
+
     @validator("port")
     def check_port(cls, p):
         if p > 65535 or p <= 0:
@@ -124,7 +125,10 @@ class Config(BaseModel, extra=Extra.ignore):
             raise FileNotFoundError(
                 f"Configuration file not found in {file}, a blank configuration file was created at that location"
             )
-        config = cls.parse_obj(yaml.load(file.read_bytes(), Loader=yaml.FullLoader))
+        config = cls(
+            **yaml.load(file.read_bytes(), Loader=yaml.FullLoader),
+            _config_file_path=file.absolute().as_posix(),
+        )
 
 
 config: Optional[Config] = None

@@ -17,12 +17,10 @@ async def counter(url):
 
 
 async def get_sub(url: str) -> List[Union[SS, SSR, Snell, Socks5, Trojan, Vmess]]:
-    return Clash.parse_obj(
-        yaml.load(await Download.content(url), Loader=yaml.FullLoader)
+    return Clash(
+        **yaml.load(await Download.content(url), Loader=yaml.FullLoader)
     ).proxies
 
 
 async def get_file(file: str) -> List[Union[SS, SSR, Snell, Socks5, Trojan, Vmess]]:
-    return Clash.parse_obj(
-        yaml.load(Path(file).read_bytes(), Loader=yaml.FullLoader)
-    ).proxies
+    return Clash(**yaml.load(Path(file).read_bytes(), Loader=yaml.FullLoader)).proxies
