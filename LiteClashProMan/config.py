@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union,Set
+from typing import Dict, List, Literal, Optional, Union, Set
 
 import yaml
 from pydantic import BaseModel, Extra, validator
@@ -45,6 +45,7 @@ class ClashFile(Subscribe):
 class Profile(BaseModel):
     template: str
     subs: List[str] = []
+    ids: Set[str] = set()
 
 
 class Config(BaseModel, extra=Extra.ignore):
@@ -69,7 +70,7 @@ class Config(BaseModel, extra=Extra.ignore):
     subscribes: Dict[str, Union[JMS, ClashSub, ClashFile]]
     profiles: Dict[str, Profile]
 
-    _config_file_path: str = "config.yaml"
+    config_file_path: str
 
     @validator("port")
     def check_port(cls, p):
@@ -127,7 +128,7 @@ class Config(BaseModel, extra=Extra.ignore):
             )
         config = cls(
             **yaml.load(file.read_bytes(), Loader=yaml.FullLoader),
-            _config_file_path=file.absolute().as_posix(),
+            config_file_path=file.absolute().as_posix(),
         )
 
 

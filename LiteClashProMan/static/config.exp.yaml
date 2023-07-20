@@ -58,7 +58,6 @@ subscribes:
   ClashFile:
     type: ClashFile
     file: /path/to/your/clash/profile.yaml
-  
 
 # ============================== 配置文件相关设置 ==============================
 profiles:
@@ -66,6 +65,10 @@ profiles:
     template: blacklist # 使用的配置模板
     subs: # 使用的订阅节点，可留空
       - JMS # 节点名为订阅信息中的节点名
+    ids: # 如果添加了此字段，下载此配置文件时需要再 url 中包含 ?id=xxxx 的字段并校验
+      - "合法的用户ID"
+      - "仅允许字符串"
+      - "123" # int 会报错，请使用字符串
   whitelist-jms:
     template: whitelist
     subs: # 若包含多个节点，会禁用 subscription-userinfo
@@ -74,7 +77,6 @@ profiles:
   copy-template:
     # 若subs留空，即直接复制模板文件并进行合法性检查，也会禁用 subscription-userinfo
     template: profile
-
 # 备注：
 #
 # subscription-userinfo：获取订阅地址时包含在 headers 中的参数，部分基于 clash 的软件
