@@ -25,8 +25,7 @@ class SS(BaseModel, extra=Extra.allow):
         "xchacha20-ietf-poly1305",
     ]
     password: str
-    udp: Optional[bool]
-
+    udp: Optional[bool] = False
 
 
 class SSR(SS):
@@ -47,9 +46,9 @@ class SSR(SS):
         "auth_chain_a",
         "auth_chain_b",
     ]
-    obfs_param: Optional[str] = Field(alias="obfs-param")
-    protocol_param: Optional[str] = Field(alias="protocol-param")
-    udp: Optional[bool]
+    obfs_param: Optional[str] = Field(default=None, alias="obfs-param")
+    protocol_param: Optional[str] = Field(default=None, alias="protocol-param")
+    udp: Optional[bool] = False
 
 
 class Vmess(BaseModel, extra=Extra.allow):
@@ -62,13 +61,11 @@ class Vmess(BaseModel, extra=Extra.allow):
     cipher: Literal["auto", "aes-128-gcm", "chacha20-poly1305", "none"] = "auto"
 
 
-
 class Socks5(BaseModel, extra=Extra.allow):
     name: str
     type: Literal["socks5"] = "socks5"
     server: str
     port: int
-
 
 
 class Snell(BaseModel, extra=Extra.allow):
@@ -79,11 +76,9 @@ class Snell(BaseModel, extra=Extra.allow):
     psk: str
 
 
-
 class Trojan(BaseModel, extra=Extra.allow):
     name: str
     type: Literal["trojan"] = "trojan"
     server: str
     port: int
     password: str
-

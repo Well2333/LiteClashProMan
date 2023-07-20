@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Sequence, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Extra, Field, validator
@@ -14,13 +14,15 @@ class ClashTemplate(BaseModel, extra=Extra.allow):
         List[Union[SS, SSR, Vmess, Socks5, Snell, Trojan]], Literal["__proxies_list__"]
     ]
     proxy_groups: List[ProxyGroupTemplate] = Field(alias="proxy-groups")
-    rule_providers: Optional[Dict[str, RuleProvider]] = Field(alias="rule-providers")
+    rule_providers: Optional[Dict[str, RuleProvider]] = Field(
+        default=None, alias="rule-providers"
+    )
     rules: List[str]
 
     @classmethod
     def load(cls, file: str) -> "ClashTemplate":
-        return cls.parse_obj(
-            yaml.load(
+        return cls(
+            **yaml.load(
                 Path(f"data/template/{file}.yaml").read_bytes(), Loader=yaml.FullLoader
             )
         )
@@ -29,7 +31,7 @@ class ClashTemplate(BaseModel, extra=Extra.allow):
         self, proxies: List[Union[SS, SSR, Vmess, Socks5, Snell, Trojan]]
     ) -> "Clash":
         if not proxies:
-            return Clash.parse_obj(self.dict(exclude_none=True, by_alias=True))
+            return Clash(**self.dict(exclude_none=True, by_alias=True))
         proxies_name_list = [proxy.name for proxy in proxies]
         proxy_groups = []
         for group in self.proxy_groups:
@@ -39,7 +41,7 @@ class ClashTemplate(BaseModel, extra=Extra.allow):
 
         self.proxies = proxies
         self.proxy_groups = proxy_groups
-        return Clash.parse_obj(self.dict(exclude_none=True, by_alias=True))
+        return Clash(**self.dict(exclude_none=True, by_alias=True))
 
 
 class Clash(ClashTemplate):
