@@ -3,12 +3,12 @@ from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
-from starlette.responses import FileResponse
+from starlette.responses import PlainTextResponse
 from uvicorn import Config, Server
 
 from .config import config
 from .log import LOGGING_CONFIG
-from .subscribe import counter, update
+from .subscribe import counter, update_provider, generate_profile
 
 if config.sentry_dsn:
     import sentry_sdk
@@ -44,14 +44,12 @@ async def profile(request: Request, path: str, id: str = None):
         f"A request from {id}({user_ip}) to download profile {path} was received"
     )
 
-    resp = FileResponse(
-        path=f"data/profile/{path}",
+    resp = PlainTextResponse(
+        content=await generate_profile(path[:-5]), headers=config.headers.copy()
     )
     counter_info = await counter(path[:-5])
     if counter_info:
         resp.headers["subscription-userinfo"] = counter_info
-    for h in config.headers:
-        resp.headers[h] = config.headers[h]
     return resp
 
 
@@ -59,7 +57,7 @@ async def profile(request: Request, path: str, id: str = None):
 @app.get(f"/{config.urlprefix}/update")
 async def _():
     logger.info("Update is triggered manually")
-    error = await update()
+    error = await update_provider()
     return str(error) or "update complete"
 
 
@@ -71,7 +69,7 @@ async def trigger_error():
 
 @app.on_event("startup")
 async def startup_event():
-    error = await update()
+    error = await update_provider()
     if error:
         raise error
     logger.info(
@@ -79,7 +77,7 @@ async def startup_event():
     )
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
-        update, CronTrigger.from_crontab(config.update_cron, config.update_tz)
+        update_provider, CronTrigger.from_crontab(config.update_cron, config.update_tz)
     )
     scheduler.start()
     logger.info(
