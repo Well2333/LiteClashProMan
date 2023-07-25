@@ -15,11 +15,10 @@ def main():
     # check dirs and files
     static_dir = Path(__file__).parent.joinpath("static")
     data_dir = Path("data")
-    profile_dir = data_dir.joinpath("profile")
     provider_dir = data_dir.joinpath("provider")
     template_dir = data_dir.joinpath("template")
 
-    for dir in [data_dir, profile_dir, provider_dir, template_dir]:
+    for dir in [data_dir, provider_dir, template_dir]:
         if not dir.exists():
             dir.mkdir(0o755, parents=True, exist_ok=True)
         assert dir.is_dir(), f"{dir.as_posix()} should be folder"
@@ -28,11 +27,6 @@ def main():
         shutil.copytree(
             static_dir.joinpath("template"), template_dir, dirs_exist_ok=True
         )
-
-    # remove old profiles
-    if any(profile_dir.glob("*")):
-        shutil.rmtree(profile_dir)
-        profile_dir.mkdir(0o755, parents=True, exist_ok=True)
 
     Config.load(Path(args.config))
 

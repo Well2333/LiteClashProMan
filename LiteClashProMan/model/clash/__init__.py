@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union, Sequence
 
 import yaml
 from pydantic import BaseModel, Extra, Field, validator
@@ -37,10 +37,12 @@ class ClashTemplate(BaseModel, extra=Extra.allow):
         for group in self.proxy_groups:
             if group.proxies == "__proxies_name_list__":
                 group.proxies = proxies_name_list
-            if isinstance(group.proxies, list):
-                if "__proxies_name_list__" in group.proxies:
-                    group.proxies.remove("__proxies_name_list__")
-                    group.proxies += proxies_name_list
+            if (
+                isinstance(group.proxies, Sequence)
+                and "__proxies_name_list__" in group.proxies
+            ):
+                group.proxies.remove("__proxies_name_list__")
+                group.proxies += proxies_name_list
             proxy_groups.append(group)
 
         self.proxies = proxies
@@ -51,13 +53,3 @@ class ClashTemplate(BaseModel, extra=Extra.allow):
 class Clash(ClashTemplate):
     proxies: List[Union[SS, SSR, Vmess, Socks5, Snell, Trojan]]
     proxy_groups: List[ProxyGroup] = Field(alias="proxy-groups")
-
-    def save(self, file: str) -> None:
-        Path(f"data/profile/{file}.yaml").write_text(
-            yaml.dump(
-                self.dict(exclude_none=True, by_alias=True, exclude_unset=True),
-                sort_keys=False,
-                allow_unicode=True,
-            ),
-            encoding="utf-8",
-        )

@@ -1,5 +1,7 @@
+from pathlib import Path
 from typing import List, Union
 
+import yaml
 from loguru import logger
 
 from ..config import config
@@ -23,29 +25,42 @@ async def _subs(
     return proxies
 
 
-async def update():
-    logger.info("Start update profiles")
+async def generate_profile(profile: str):
+    proxies = await _subs(config.profiles[profile].subs)
+    logger.debug(
+        f"Generating profile {profile} from template {config.profiles[profile].template}"
+    )
+    template = ClashTemplate.load(config.profiles[profile].template)
+    clash = template.render(proxies)
+    if clash.rule_providers:
+        for provider in clash.rule_providers:
+            # if provider is exists in local
+            # replace it with loacl file
+            if Path(f"data/provider/{provider}.yaml").exists():
+                clash.rule_providers[provider].url = "/".join(
+                    [
+                        config.domian,
+                        config.urlprefix,
+                        "provider",
+                        f"{provider}.yaml",
+                    ]
+                )
+    return yaml.dump(
+        clash.model_dump(exclude_none=True, by_alias=True, exclude_unset=True),
+        sort_keys=False,
+        allow_unicode=True,
+    )
+
+
+async def update_provider():
+    logger.info("Start update provider")
     try:
         rulesets = {}
         for profile in config.profiles:
-            proxies = await _subs(config.profiles[profile].subs)
-            logger.debug(
-                f"Generating profile {profile} from template {config.profiles[profile].template}"
-            )
             template = ClashTemplate.load(config.profiles[profile].template)
-            clash = template.render(proxies)
-            if clash.rule_providers:
-                for provider in clash.rule_providers:
-                    rulesets[provider] = clash.rule_providers[provider].url
-                    clash.rule_providers[provider].url = "/".join(
-                        [
-                            config.domian,
-                            config.urlprefix,
-                            "provider",
-                            f"{provider}.yaml",
-                        ]
-                    )
-            clash.save(profile)
+            if template.rule_providers:
+                for provider in template.rule_providers:
+                    rulesets[provider] = template.rule_providers[provider].url
         await Download.provider(rulesets)
         logger.success("Update complete")
 
