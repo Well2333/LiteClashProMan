@@ -9,6 +9,11 @@ from ..model.clash import SS, SSR, ClashTemplate, Snell, Socks5, Trojan, Vmess
 from ..utils import Download
 from . import clash, jms
 
+try:
+    from importlib.metadata import version
+except ImportError:
+    from importlib_metadata import version
+
 
 async def _subs(
     subs: List[str],
@@ -45,8 +50,14 @@ async def generate_profile(profile: str):
                         f"{provider}.yaml",
                     ]
                 )
+    if version("pydantic").startswith("2"):  # pydantic v2
+        clash_dict = clash.model_dump(
+            exclude_none=True, by_alias=True, exclude_unset=True
+        )
+    else:  # pydantic v1
+        clash_dict = clash.dict(exclude_none=True, by_alias=True, exclude_unset=True)
     return yaml.dump(
-        clash.model_dump(exclude_none=True, by_alias=True, exclude_unset=True),
+        clash_dict,
         sort_keys=False,
         allow_unicode=True,
     )
