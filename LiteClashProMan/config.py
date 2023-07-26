@@ -58,6 +58,7 @@ class Config(BaseModel, extra=Extra.ignore):
     download_retry: int = 3
     download_proxy: Optional[str] = None
 
+    replace_template_provider: bool = True
     update_cron: str = "35 6 * * *"
     update_tz: str = "Asia/Shanghai"
 

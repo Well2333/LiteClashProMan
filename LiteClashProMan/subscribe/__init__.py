@@ -37,7 +37,7 @@ async def generate_profile(profile: str):
     )
     template = ClashTemplate.load(config.profiles[profile].template)
     clash = template.render(proxies)
-    if clash.rule_providers:
+    if config.replace_template_provider and clash.rule_providers:
         for provider in clash.rule_providers:
             # if provider is exists in local
             # replace it with loacl file
@@ -50,12 +50,14 @@ async def generate_profile(profile: str):
                         f"{provider}.yaml",
                     ]
                 )
+    # get clash dict
     if version("pydantic").startswith("2"):  # pydantic v2
         clash_dict = clash.model_dump(
             exclude_none=True, by_alias=True, exclude_unset=True
         )
     else:  # pydantic v1
         clash_dict = clash.dict(exclude_none=True, by_alias=True, exclude_unset=True)
+
     return yaml.dump(
         clash_dict,
         sort_keys=False,
@@ -64,6 +66,8 @@ async def generate_profile(profile: str):
 
 
 async def update_provider():
+    if not config.replace_template_provider:
+        return
     logger.info("Start update provider")
     try:
         rulesets = {}
@@ -73,7 +77,7 @@ async def update_provider():
                 for provider in template.rule_providers:
                     rulesets[provider] = template.rule_providers[provider].url
         await Download.provider(rulesets)
-        logger.success("Update complete")
+        logger.success("Provider update complete")
 
     except Exception as e:
         logger.critical(e)
