@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Dict
+import time
 
 import yaml
 from loguru import logger
@@ -15,26 +16,40 @@ except ImportError:
     from importlib_metadata import version
 
 
+_subs_caches: Dict[str, Dict] = {}
+
+
 async def _subs(
     subs: List[str],
 ) -> List[Union[SS, SSR, Vmess, Socks5, Snell, Trojan]]:
+    global _subs_caches
+    now = int(time.time())
+
     proxies = []
     for name in subs:
         sub = config.subscribes[name]
-        if sub.type == "jms":
-            proxies += await jms.get(sub.url)
-        if sub.type == "ClashSub":
-            proxies += await clash.get_sub(sub.url)
-        if sub.type == "ClashFile":
-            proxies += await clash.get_file(sub.file)
+        cache = _subs_caches.get(name)
+        if cache and cache["expire_time"] > now:
+            logger.debug(f"using cache of subs {name}")
+            _proxies = cache["proxies"]
+        else:
+            if sub.type == "jms":
+                _proxies = await jms.get(sub.url)
+            if sub.type == "ClashSub":
+                _proxies = await clash.get_sub(sub.url)
+            if sub.type == "ClashFile":
+                _proxies = await clash.get_file(sub.file)
+            _subs_caches[name] = {"expire_time": now + 7200, "proxies": _proxies}
+        proxies.extend(_proxies)
     return proxies
 
 
 async def generate_profile(profile: str):
-    proxies = await _subs(config.profiles[profile].subs)
     logger.debug(
         f"Generating profile {profile} from template {config.profiles[profile].template}"
     )
+
+    proxies = await _subs(config.profiles[profile].subs)
     template = ClashTemplate.load(config.profiles[profile].template)
     clash = template.render(proxies)
     if config.replace_template_provider and clash.rule_providers:
