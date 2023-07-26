@@ -15,6 +15,8 @@ download_retry: 3
 # download_proxy: "http://127.0.0.1:7890"
 
 #  ============================== 更新相关设置 ==============================
+## 是否替换 template 中的 provider，开启后才会进行定时更新
+replace_template_provider: True
 ## 触发更新的cron表达式，仅支持五位表达式，其格式为: 分 时 日 月 周
 update_cron: 35 6 * * *
 ## 更新所参考的时区，如果是国内用户请勿改动
