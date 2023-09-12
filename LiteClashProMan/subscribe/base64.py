@@ -1,50 +1,68 @@
 import base64
 import json
+from typing import TypedDict
 
 from .clash import SS, Vmess
 
 
 def ss(sub: str) -> "SS":
     """Format the ShadowSocks proxy like ss://{base64encode}#{name}@{server}:{port}"""
-    ci_pa, se_po = sub[5:].split("#")
+    base64_encoded, name_and_other = sub[5:].split("#")
 
-    ci_pa = base64.b64decode(f"{ci_pa}===").decode().split("@")[0]
-    ci, pa = ci_pa.split(":")
+    cipher_password, server_and_port = (
+        base64.b64decode(f"{base64_encoded}===").decode().split("@")
+    )
+    cipher, password = cipher_password.split(":")
 
-    se, po = se_po.split("@")[1].split(":")
-    na = "JMS-" + se.split(".")[0]
+    server, port = server_and_port.split(":")
+    name = "JMS-" + name_and_other.split("@")[1].split(".")[0]
 
     return SS(
-        **{
-            "name": na,
-            "server": se,
-            "type": "ss",
-            "port": int(po),
-            "cipher": ci,
-            "password": pa,
-            "udp": True,
-        }
+        name=name,
+        server=server,
+        type="ss",
+        port=int(port),
+        cipher=cipher,
+        password=password,
+        udp=True,
     )
+
+
+class VmessRaw(TypedDict):
+    ps: str
+    port: str
+    id: str
+    aid: int
+    net: str
+    type: str
+    tls: str
+    add: str
 
 
 def vmess(sub: str) -> "Vmess":
     """Format the Vmess proxy like vmess://{base64encode}"""
-    vmess = json.loads(base64.b64decode(f"{sub[8:]}===").decode())
 
-    se = str(vmess["ps"]).split("@")[1].split(":")[0]
-    na = "JMS-" + se.split(".")[0]
+    decoded_sub = base64.b64decode(f"{sub[8:]}===").decode()
+    vmess_raw = json.loads(decoded_sub)
+
+    server_address = vmess_raw["add"]
+    port = int(vmess_raw["port"])
+    uuid = vmess_raw["id"]
+    alter_id = vmess_raw["aid"]
+    tls_enabled = vmess_raw["tls"] != "none"
+
+    se_name = str(vmess_raw["ps"]).split("@")[1].split(":")[0]
+    name = "JMS-" + se_name.split(".")[0]
 
     return Vmess(
-        **{
-            "name": na,
-            "server": se,
-            "port": int(vmess["port"]),
-            "type": "vmess",
-            "uuid": vmess["id"],
-            "alterId": vmess["aid"],
-            "cipher": "auto",
-            "tls": vmess["tls"] != "none",
-            "skip-cert-verify": True,
-            "udp": True,
-        }
+        name=name,
+        server=server_address,
+        port=port,
+        type="vmess",
+        uuid=uuid,
+        alterId=alter_id,
+        cipher="auto",
+        tls=tls_enabled,
+        skip_cert_verify=True,
+        udp=False,
     )
