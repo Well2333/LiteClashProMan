@@ -1,6 +1,6 @@
-from pathlib import Path
-from typing import List, Union, Dict
 import time
+from pathlib import Path
+from typing import Dict, List, Union
 
 import yaml
 from loguru import logger

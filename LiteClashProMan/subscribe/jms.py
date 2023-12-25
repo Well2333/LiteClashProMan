@@ -22,7 +22,7 @@ async def counter(url, tz: Optional[str] = None):
         # the next month should be taken
         if expire_time.month == 12:
             year = expire_time.year + 1
-            month = expire_time.month = 1
+            month = 1
         else:
             year = expire_time.year
             month = expire_time.month + 1
