@@ -4,8 +4,7 @@ from loguru import logger
 from starlette.responses import PlainTextResponse
 
 from ..config import config
-from ..subscribe import counter, update_provider, generate_profile
-
+from ..subscribe import counter, generate_profile, update_provider
 
 app = FastAPI()
 
