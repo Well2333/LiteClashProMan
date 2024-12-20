@@ -51,7 +51,7 @@ class Config(BaseModel, extra="ignore"):
     log_level: Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = (
         "INFO"
     )
-    sentry_dsn: Optional[str]
+    sentry_dsn: Optional[str] = None
 
     download_thread: int = 4
     download_retry: int = 3
