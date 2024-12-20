@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, List, Literal, Optional, Set, Union
 
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationInfo, field_validator
 from pytz import UnknownTimeZoneError, timezone
 
 
@@ -90,15 +90,15 @@ class Config(BaseModel, extra="ignore"):
     def format_urlprefix(cls, v: str):
         return v.strip("/")
 
-    @field_validator("profiles", mode="before")
-    def validate_profiles(cls, v: Dict[str, Profile], values):
+    @field_validator("profiles", mode="after")
+    def validate_profiles(cls, v: Dict[str, Profile], values: ValidationInfo):
         for profile in v.values():
             # check template
             if not Path(f"data/template/{profile.template}.yaml").exists():
                 raise ValueError(f"template {profile.template}.yaml not exists")
             # check subscribes
             for sub in profile.subs:
-                if sub not in values["subscribes"].keys():
+                if sub not in values.data.get("subscribes", {}).keys():
                     raise ValueError(f"subscribe {sub} not exists")
         return v
 
@@ -125,4 +125,4 @@ class Config(BaseModel, extra="ignore"):
         )
 
 
-config: Config = None # type: ignore
+config: Config = None  # type: ignore

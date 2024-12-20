@@ -11,7 +11,7 @@ from .config import config
 
 
 class Download:
-    sem: Semaphore
+    sem: Semaphore = None # type: ignore
 
     @classmethod
     async def content(cls, url: str) -> bytes:
@@ -24,7 +24,7 @@ class Download:
                     res = await cls._request(url, config.download_proxy)
                     return res.content
                 except Exception as e:
-                    logger.error(f"[{count+1}] get {url} failed: {e}")
+                    logger.error(f"[{count+1}] get {url} failed - {type(e)}:{e}")
         logger.error(f"[{count+1}] {url} has reached the maximum retries, stop retries")
         return b""
 
