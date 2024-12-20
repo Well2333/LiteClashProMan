@@ -1,17 +1,16 @@
-import json
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union, Set
+from typing import Dict, List, Literal, Optional, Set, Union
 
 import yaml
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, field_validator
 from pytz import UnknownTimeZoneError, timezone
 
 
-class Subscribe(BaseModel, extra=Extra.allow):
+class Subscribe(BaseModel, extra="allow"):
     type: str
     subtz: str = "Asia/Shanghai"
 
-    @validator("subtz")
+    @field_validator("subtz")
     def check_timezone(cls, tz: str):
         try:
             timezone(tz)
@@ -48,10 +47,10 @@ class Profile(BaseModel):
     ids: Set[str] = set()
 
 
-class Config(BaseModel, extra=Extra.ignore):
-    log_level: Literal[
-        "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
-    ] = "INFO"
+class Config(BaseModel, extra="ignore"):
+    log_level: Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = (
+        "INFO"
+    )
     sentry_dsn: Optional[str]
 
     download_thread: int = 4
@@ -73,13 +72,13 @@ class Config(BaseModel, extra=Extra.ignore):
 
     config_file_path: str
 
-    @validator("port")
+    @field_validator("port")
     def check_port(cls, p):
         if p > 65535 or p <= 0:
             raise ValueError(f"Port number must be in the range 0 to 65535, not {p}")
         return p
 
-    @validator("update_tz")
+    @field_validator("update_tz")
     def check_timezone(cls, tz: str):
         try:
             timezone(tz)
@@ -87,11 +86,11 @@ class Config(BaseModel, extra=Extra.ignore):
             raise ValueError(f"Timezone {tz} could not be resolved") from e
         return tz
 
-    @validator("urlprefix", "domian", pre=True)
+    @field_validator("urlprefix", "domian")
     def format_urlprefix(cls, v: str):
         return v.strip("/")
 
-    @validator("profiles")
+    @field_validator("profiles", mode="before")
     def validate_profiles(cls, v: Dict[str, Profile], values):
         for profile in v.values():
             # check template
@@ -112,13 +111,6 @@ class Config(BaseModel, extra=Extra.ignore):
             encoding="utf-8",
         )
 
-    @staticmethod
-    def valueerror_parser(e: ValueError):
-        return {
-            ".".join([str(x) for x in err["loc"]]): err["msg"]
-            for err in json.loads(e.json())
-        }
-
     @classmethod
     def load(cls, file: Path):
         global config
@@ -133,4 +125,4 @@ class Config(BaseModel, extra=Extra.ignore):
         )
 
 
-config: Optional[Config] = None
+config: Config = None # type: ignore

@@ -1,3 +1,7 @@
+from contextlib import asynccontextmanager
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
@@ -6,7 +10,27 @@ from starlette.responses import PlainTextResponse
 from ..config import config
 from ..subscribe import counter, generate_profile, update_provider
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    error = await update_provider()
+    if error:
+        raise error
+    logger.info(
+        f"Starting up scheduler from crontab {config.update_cron} at timezone {config.update_tz}"
+    )
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        update_provider, CronTrigger.from_crontab(config.update_cron, config.update_tz)
+    )
+    scheduler.start()
+    logger.info(
+        f"Application startup complete, listening requests from {config.domian}/{config.urlprefix}/"
+    )
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # provider download
 if config.replace_template_provider:
@@ -15,7 +39,9 @@ if config.replace_template_provider:
 
 # profile download
 @app.get(f"/{config.urlprefix}/profile" + "/{path}")
-async def profile(request: Request, path: str, id: str = None):
+async def profile(
+    request: Request, path: str, id: str = "NO-ID", jms_use_ip: bool = False
+):
     path = path.rsplit(".", 1)[0] + ".yaml"
 
     # check profile is exists
@@ -33,7 +59,8 @@ async def profile(request: Request, path: str, id: str = None):
     )
 
     resp = PlainTextResponse(
-        content=await generate_profile(path[:-5]), headers=config.headers.copy()
+        content=await generate_profile(path[:-5], jms_use_ip=jms_use_ip),
+        headers=config.headers.copy(),
     )
     counter_info = await counter(path[:-5])
     if counter_info:

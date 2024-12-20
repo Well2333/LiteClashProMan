@@ -9,7 +9,7 @@ from ..utils import Download
 
 
 async def counter(url):
-    resp: Response = await Download.client.get(url)
+    resp: Response = await Download._request(url)
     try:
         return resp.headers.get("subscription-userinfo")
     except KeyError:

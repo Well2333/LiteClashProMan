@@ -13,14 +13,14 @@ from . import clash, jms
 try:
     from importlib.metadata import version
 except ImportError:
-    from importlib_metadata import version
+    from importlib_metadata import version  # type: ignore
 
 
 _subs_caches: Dict[str, Dict] = {}
 
 
 async def _subs(
-    subs: List[str],
+    subs: List[str], jms_use_ip: bool = False
 ) -> List[Union[SS, SSR, Vmess, Socks5, Snell, Trojan]]:
     global _subs_caches
     now = int(time.time())
@@ -34,7 +34,9 @@ async def _subs(
             _proxies = cache["proxies"]
         else:
             if sub.type == "jms":
-                _proxies = await jms.get(sub.url)
+                url = sub.url.removesuffix("&usedomains=1")
+                url = url if jms_use_ip else url + "&usedomains=1"
+                _proxies = await jms.get(url)
             if sub.type == "ClashSub":
                 _proxies = await clash.get_sub(sub.url)
             if sub.type == "ClashFile":
@@ -44,12 +46,12 @@ async def _subs(
     return proxies
 
 
-async def generate_profile(profile: str):
+async def generate_profile(profile: str, jms_use_ip: bool = False):
     logger.debug(
         f"Generating profile {profile} from template {config.profiles[profile].template}"
     )
 
-    proxies = await _subs(config.profiles[profile].subs)
+    proxies = await _subs(config.profiles[profile].subs, jms_use_ip)
     template = ClashTemplate.load(config.profiles[profile].template)
     clash = template.render(proxies)
     if config.replace_template_provider and clash.rule_providers:
